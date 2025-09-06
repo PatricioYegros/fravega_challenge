@@ -1,4 +1,4 @@
-FROM golang:alpine
+FROM golang:alpine AS builder
 
 WORKDIR /challenge_pyegros/app/
 COPY go.mod go.sum ./
@@ -6,7 +6,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o ./bin/src ./src
+RUN CGO_ENABLED=0 GOOS=linux go build -o ./bin/src ./src/main.go
 
-CMD ["/challenge_pyegros/app/bin/src"]
+CMD ["./bin/src"]
 EXPOSE 8080

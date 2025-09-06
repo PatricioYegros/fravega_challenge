@@ -4,6 +4,7 @@ import (
 	"challenge_pyegros/app/models"
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -254,6 +255,7 @@ func (r *Repository) defaultObtainID() (int64, error) {
 			}
 			return 1, nil
 		} else {
+			fmt.Println(err.Error())
 			return 0, ErrGettingAutoIncrementalId
 		}
 	} else {
