@@ -3,11 +3,13 @@ package orders
 import (
 	"challenge_pyegros/app/models"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -38,6 +40,11 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &order)
 	if err != nil {
 		http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
+		return
+	}
+	err = checkFormatDate(order.PurchaseDate)
+	if err != nil {
+		http.Error(w, error.Error(err), http.StatusInternalServerError)
 		return
 	}
 	var response *models.ResponseCreate
@@ -73,6 +80,12 @@ func (h *Handler) UpdateEventOrder(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &event)
 	if err != nil {
 		http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
+		return
+	}
+
+	err = checkFormatDate(event.Date)
+	if err != nil {
+		http.Error(w, error.Error(err), http.StatusInternalServerError)
 		return
 	}
 
@@ -121,6 +134,17 @@ func (h *Handler) GetOrderByFilters(w http.ResponseWriter, r *http.Request) {
 
 	filters := getFilters(r)
 
+	err := checkFormatDate(filters.CreatedOnFrom)
+	if err != nil {
+		http.Error(w, "The From date is not in the correct format", http.StatusInternalServerError)
+		return
+	}
+	err = checkFormatDate(filters.CreatedOnTo)
+	if err != nil {
+		http.Error(w, "The To date is not in the correct format", http.StatusInternalServerError)
+		return
+	}
+
 	response, err := h.u.GetOrderByFilters(filters)
 	if err != nil {
 		http.Error(w, `{"error": "Failed to get order by filters"}`, http.StatusInternalServerError)
@@ -161,4 +185,13 @@ func getQueryValue(r *http.Request, key string) (string, error) {
 	}
 
 	return r.URL.Query().Get(key), nil
+}
+
+func checkFormatDate(date string) error {
+	var err = errors.New("The date is not in the correct format")
+	_, errParse := time.Parse(time.RFC3339, date)
+	if errParse != nil {
+		return err
+	}
+	return nil
 }
