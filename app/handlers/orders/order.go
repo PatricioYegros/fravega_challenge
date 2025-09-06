@@ -2,14 +2,12 @@ package orders
 
 import (
 	"challenge_pyegros/app/models"
+	"challenge_pyegros/app/utils"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -42,7 +40,7 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
 		return
 	}
-	err = checkFormatDate(order.PurchaseDate)
+	err = utils.CheckFormatDate(order.PurchaseDate)
 	if err != nil {
 		http.Error(w, error.Error(err), http.StatusInternalServerError)
 		return
@@ -83,7 +81,7 @@ func (h *Handler) UpdateEventOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = checkFormatDate(event.Date)
+	err = utils.CheckFormatDate(event.Date)
 	if err != nil {
 		http.Error(w, error.Error(err), http.StatusInternalServerError)
 		return
@@ -132,14 +130,14 @@ func (h *Handler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetOrderByFilters(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	filters := getFilters(r)
+	filters := utils.GetFilters(r)
 
-	err := checkFormatDate(filters.CreatedOnFrom)
+	err := utils.CheckFormatDate(filters.CreatedOnFrom)
 	if err != nil {
 		http.Error(w, "The From date is not in the correct format", http.StatusInternalServerError)
 		return
 	}
-	err = checkFormatDate(filters.CreatedOnTo)
+	err = utils.CheckFormatDate(filters.CreatedOnTo)
 	if err != nil {
 		http.Error(w, "The To date is not in the correct format", http.StatusInternalServerError)
 		return
@@ -158,40 +156,4 @@ func (h *Handler) GetOrderByFilters(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(json)
-}
-
-func getFilters(r *http.Request) models.Filters {
-	orderId, _ := getQueryValue(r, "orderId")
-	orderIdInt, _ := strconv.Atoi(orderId)
-	documentNumber, _ := getQueryValue(r, "documentNumber")
-	status, _ := getQueryValue(r, "status")
-	createdOnFrom, _ := getQueryValue(r, "createdOnFrom")
-	createdOnTo, _ := getQueryValue(r, "createdOnTo")
-
-	filters := models.Filters{
-		OrderId:        int64(orderIdInt),
-		DocumentNumber: documentNumber,
-		Status:         status,
-		CreatedOnFrom:  createdOnFrom,
-		CreatedOnTo:    createdOnTo,
-	}
-
-	return filters
-}
-
-func getQueryValue(r *http.Request, key string) (string, error) {
-	if !r.URL.Query().Has(key) {
-		return "", fmt.Errorf("missing query parameter: %s", key)
-	}
-
-	return r.URL.Query().Get(key), nil
-}
-
-func checkFormatDate(date string) error {
-	var err = errors.New("The date is not in the correct format")
-	_, errParse := time.Parse(time.RFC3339, date)
-	if errParse != nil {
-		return err
-	}
-	return nil
 }
