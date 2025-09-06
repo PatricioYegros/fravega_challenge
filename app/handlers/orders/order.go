@@ -112,7 +112,7 @@ func (h *Handler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.u.GetOrderByID(int64(orderIDInt))
 	if err != nil {
-		http.Error(w, `{"error": "Failed to get order by ID"}`, http.StatusInternalServerError)
+		http.Error(w, error.Error(err), http.StatusInternalServerError)
 		return
 	}
 
@@ -145,7 +145,7 @@ func (h *Handler) GetOrderByFilters(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.u.GetOrderByFilters(filters)
 	if err != nil {
-		http.Error(w, `{"error": "Failed to get order by filters"}`, http.StatusInternalServerError)
+		http.Error(w, error.Error(err), http.StatusInternalServerError)
 		return
 	}
 
