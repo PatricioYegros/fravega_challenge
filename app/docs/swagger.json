@@ -1,0 +1,381 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for create and manage orders.",
+        "title": "Orders API",
+        "contact": {
+            "name": "Patricio Yegros",
+            "url": "github.com/PatricioYegros/fravega_challenge",
+            "email": "patricioyegros@hotmail.com"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/orders": {
+            "post": {
+                "description": "Create a order by specified body",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Creates an order",
+                "parameters": [
+                    {
+                        "description": "order",
+                        "name": "models.Order",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Order"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseCreate"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/orders/search": {
+            "get": {
+                "description": "Gets Order that matches certain filters (OrderId, DocumentNumber, Status, CreatedOnFrom, CreatedOnTo)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Get Order by filters",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "order id",
+                        "name": "orderId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "document Number",
+                        "name": "documentNumber",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "status",
+                        "name": "status",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "created On From",
+                        "name": "createdOnFrom",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "created On To",
+                        "name": "createdOnTo",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Order"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/orders/{orderId}": {
+            "get": {
+                "description": "Gets an order by its id and adds the translations to spanish of channel and status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Get Order by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "order id",
+                        "name": "orderId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseGet"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/orders/{orderId}/events": {
+            "post": {
+                "description": "Updates the state of an order by processing a specific event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders events"
+                ],
+                "summary": "Updates the status of an order",
+                "parameters": [
+                    {
+                        "description": "event",
+                        "name": "models.Event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Event"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "order id",
+                        "name": "orderId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseUpdate"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Buyer": {
+            "type": "object",
+            "properties": {
+                "documentNumber": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Event": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Order": {
+            "type": "object",
+            "properties": {
+                "buyer": {
+                    "$ref": "#/definitions/models.Buyer"
+                },
+                "channel": {
+                    "type": "string"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Event"
+                    }
+                },
+                "externalReferenceID": {
+                    "type": "string"
+                },
+                "orderID": {
+                    "type": "integer"
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Product"
+                    }
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "totalValue": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.Product": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "sku": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ResponseCreate": {
+            "type": "object",
+            "properties": {
+                "orderID": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updatedOn": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ResponseGet": {
+            "type": "object",
+            "properties": {
+                "buyer": {
+                    "$ref": "#/definitions/models.Buyer"
+                },
+                "channel": {
+                    "type": "string"
+                },
+                "channelTranslate": {
+                    "type": "string"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Event"
+                    }
+                },
+                "externalReferenceID": {
+                    "type": "string"
+                },
+                "orderID": {
+                    "type": "integer"
+                },
+                "product": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Product"
+                    }
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusTranslate": {
+                    "type": "string"
+                },
+                "totalValue": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.ResponseUpdate": {
+            "type": "object",
+            "properties": {
+                "newStatus": {
+                    "type": "string"
+                },
+                "orderID": {
+                    "type": "integer"
+                },
+                "previousStatus": {
+                    "type": "string"
+                },
+                "updatedOn": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

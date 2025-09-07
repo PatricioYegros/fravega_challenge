@@ -1,0 +1,254 @@
+basePath: /api/v1
+definitions:
+  models.Buyer:
+    properties:
+      documentNumber:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      phone:
+        type: string
+    type: object
+  models.Event:
+    properties:
+      date:
+        type: string
+      id:
+        type: string
+      type:
+        type: string
+      user:
+        type: string
+    type: object
+  models.Order:
+    properties:
+      buyer:
+        $ref: '#/definitions/models.Buyer'
+      channel:
+        type: string
+      events:
+        items:
+          $ref: '#/definitions/models.Event'
+        type: array
+      externalReferenceID:
+        type: string
+      orderID:
+        type: integer
+      products:
+        items:
+          $ref: '#/definitions/models.Product'
+        type: array
+      purchaseDate:
+        type: string
+      status:
+        type: string
+      totalValue:
+        type: number
+    type: object
+  models.Product:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      quantity:
+        type: integer
+      sku:
+        type: string
+    type: object
+  models.ResponseCreate:
+    properties:
+      orderID:
+        type: integer
+      status:
+        type: string
+      updatedOn:
+        type: string
+    type: object
+  models.ResponseGet:
+    properties:
+      buyer:
+        $ref: '#/definitions/models.Buyer'
+      channel:
+        type: string
+      channelTranslate:
+        type: string
+      events:
+        items:
+          $ref: '#/definitions/models.Event'
+        type: array
+      externalReferenceID:
+        type: string
+      orderID:
+        type: integer
+      product:
+        items:
+          $ref: '#/definitions/models.Product'
+        type: array
+      purchaseDate:
+        type: string
+      status:
+        type: string
+      statusTranslate:
+        type: string
+      totalValue:
+        type: number
+    type: object
+  models.ResponseUpdate:
+    properties:
+      newStatus:
+        type: string
+      orderID:
+        type: integer
+      previousStatus:
+        type: string
+      updatedOn:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: patricioyegros@hotmail.com
+    name: Patricio Yegros
+    url: github.com/PatricioYegros/fravega_challenge
+  description: API for create and manage orders.
+  title: Orders API
+  version: "1.0"
+paths:
+  /orders:
+    post:
+      consumes:
+      - application/json
+      description: Create a order by specified body
+      parameters:
+      - description: order
+        in: body
+        name: models.Order
+        required: true
+        schema:
+          $ref: '#/definitions/models.Order'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseCreate'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Creates an order
+      tags:
+      - orders
+  /orders/{orderId}:
+    get:
+      consumes:
+      - application/json
+      description: Gets an order by its id and adds the translations to spanish of
+        channel and status
+      parameters:
+      - description: order id
+        format: int64
+        in: query
+        name: orderId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseGet'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Get Order by ID
+      tags:
+      - orders
+  /orders/{orderId}/events:
+    post:
+      consumes:
+      - application/json
+      description: Updates the state of an order by processing a specific event
+      parameters:
+      - description: event
+        in: body
+        name: models.Event
+        required: true
+        schema:
+          $ref: '#/definitions/models.Event'
+      - description: order id
+        in: query
+        name: orderId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseUpdate'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Updates the status of an order
+      tags:
+      - orders events
+  /orders/search:
+    get:
+      consumes:
+      - application/json
+      description: Gets Order that matches certain filters (OrderId, DocumentNumber,
+        Status, CreatedOnFrom, CreatedOnTo)
+      parameters:
+      - description: order id
+        format: int64
+        in: query
+        name: orderId
+        required: true
+        type: integer
+      - description: document Number
+        in: query
+        name: documentNumber
+        required: true
+        type: string
+      - description: status
+        in: query
+        name: status
+        required: true
+        type: string
+      - description: created On From
+        in: query
+        name: createdOnFrom
+        required: true
+        type: string
+      - description: created On To
+        in: query
+        name: createdOnTo
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Order'
+            type: array
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Get Order by filters
+      tags:
+      - orders
+swagger: "2.0"

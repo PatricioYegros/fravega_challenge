@@ -11,6 +11,16 @@ import (
 	"net/http"
 )
 
+// @title           Orders API
+// @version         1.0
+// @description     API for create and manage orders.
+
+// @contact.name   Patricio Yegros
+// @contact.url    github.com/PatricioYegros/fravega_challenge
+// @contact.email  patricioyegros@hotmail.com
+
+// @host      localhost:8080
+// @BasePath  /api/v1
 func main() {
 	client, err := database.ConnectMongoDB()
 	if err != nil {

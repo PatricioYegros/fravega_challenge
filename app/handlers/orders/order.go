@@ -23,7 +23,17 @@ func NewOrderHandler(client *mongo.Client) *OrderHandler {
 	return &OrderHandler{mongoClient: client}
 }
 
-// CreateOrder creates a new order in MongoDB.
+// CreateOrder godoc
+// @Summary Creates an order
+// @Description Create a order by specified body
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param models.Order body models.Order true "order"
+// @Success 200 {object} models.ResponseCreate
+// @Failure 400 {object} nil
+// @Failure 500 {object} nil
+// @Router /orders [post]
 func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to create order")
 	w.Header().Set("Content-Type", "application/json")
@@ -62,7 +72,18 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	w.Write(json)
 }
 
-// UpdateEventOrder updates the state of the order considering the Event
+// UpdateEventOrder godoc
+// @Summary Updates the status of an order
+// @Description Updates the state of an order by processing a specific event
+// @Tags orders events
+// @Accept json
+// @Produce json
+// @Param models.Event body models.Event true "event"
+// @Param orderId query string true "order id" string
+// @Success 200 {object} models.ResponseUpdate
+// @Failure 400 {object} nil
+// @Failure 500 {object} nil
+// @Router /orders/{orderId}/events [post]
 func (h *Handler) UpdateEventOrder(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -104,7 +125,17 @@ func (h *Handler) UpdateEventOrder(w http.ResponseWriter, r *http.Request) {
 	w.Write(json)
 }
 
-// GetOrderByID retrieves a order by ID from MongoDB.
+// GetOrderByID godoc
+// @Summary Get Order by ID
+// @Description Gets an order by its id and adds the translations to spanish of channel and status
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param orderId query int64 true "order id" int64
+// @Success 200 {object} models.ResponseGet
+// @Failure 400 {object} nil
+// @Failure 500 {object} nil
+// @Router /orders/{orderId} [get]
 func (h *Handler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	orderID := chi.URLParam(r, "orderId")
@@ -126,7 +157,21 @@ func (h *Handler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 	w.Write(json)
 }
 
-// GetOrderByFilters retrieves a order by Filters from MongoDB
+// GetOrderByFilters godoc
+// @Summary Get Order by filters
+// @Description Gets Order that matches certain filters (OrderId, DocumentNumber, Status, CreatedOnFrom, CreatedOnTo)
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param orderId query int64 true "order id" int64
+// @Param documentNumber query string true "document Number" string
+// @Param status query string true "status" string
+// @Param createdOnFrom query string true "created On From" string
+// @Param createdOnTo query string ture "created On To" string
+// @Success 200 {object} []models.Order
+// @Failure 400 {object} nil
+// @Failure 500 {object} nil
+// @Router /orders/search [get]
 func (h *Handler) GetOrderByFilters(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
