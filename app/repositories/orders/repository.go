@@ -1,11 +1,13 @@
 package orders
 
 import (
+	"challenge_pyegros/app/database"
 	"challenge_pyegros/app/models"
 	"context"
 	"errors"
 	"fmt"
 
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -25,15 +27,31 @@ var (
 type Repository struct {
 	db       *mongo.Client
 	obtainID func() (int64, error)
+	redis    *redis.Client
 }
 
-func NewRepository(client *mongo.Client) *Repository {
-	repo := &Repository{db: client}
+func NewRepository(client *mongo.Client, redis *redis.Client) *Repository {
+	repo := &Repository{
+		db:    client,
+		redis: redis,
+	}
 	repo.obtainID = repo.defaultObtainID
 	return repo
 }
 
 func (r *Repository) CreateOrder(order models.Order) (*models.ResponseCreate, error) {
+	keyForRedisCache := order.ExternalReferenceID + "-" + order.Channel
+
+	responseCache, err := database.GetOrderDataFromRedis(keyForRedisCache, r.redis)
+	if err == redis.Nil {
+		fmt.Println("Key " + keyForRedisCache + " dont exist in Cache")
+	} else if err != nil {
+		fmt.Println("Error getting value of: " + keyForRedisCache)
+	} else if responseCache != nil {
+		fmt.Println("Get value from cache")
+		return responseCache, nil
+	}
+
 	if !validateTotal(order.Products, order.TotalValue) {
 		return nil, ErrTotalMismatch
 	}
@@ -63,6 +81,11 @@ func (r *Repository) CreateOrder(order models.Order) (*models.ResponseCreate, er
 		Status:    "Created",
 		UpdatedOn: order.PurchaseDate,
 	}
+
+	err = database.SetOrderDataFromRedis(keyForRedisCache, response, r.redis)
+	if err != nil {
+		fmt.Println("Error seting value of: " + keyForRedisCache)
+	}
 	return response, nil
 }
 
@@ -71,8 +94,18 @@ func (r *Repository) UpdateEventOrder(orderID int64, event models.Event) (*model
 
 	filter := bson.M{"id": orderID}
 
+	responseCache, err := database.GetEventDataFromRedis(event.Id, r.redis)
+	if err == redis.Nil {
+		fmt.Println("Key " + event.Id + " dont exist in Cache")
+	} else if err != nil {
+		fmt.Println("Error getting value of: " + event.Id)
+	} else if responseCache != nil {
+		fmt.Println("Get value from cache")
+		return responseCache, nil
+	}
+
 	var order models.Order
-	err := collection.FindOne(context.TODO(), filter).Decode(&order)
+	err = collection.FindOne(context.TODO(), filter).Decode(&order)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +136,11 @@ func (r *Repository) UpdateEventOrder(orderID int64, event models.Event) (*model
 	_, err = collection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return nil, err
+	}
+
+	err = database.SetEventDataFromRedis(event.Id, response, r.redis)
+	if err != nil {
+		fmt.Println("Error seting value of: " + event.Id)
 	}
 
 	return response, nil

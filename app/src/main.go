@@ -32,8 +32,10 @@ func main() {
 		}
 	}()
 
-	repoOrders := orderRepository.NewRepository(client)
-	useCaseOrders := orderUseCase.NewUseCase(repoOrders)
+	rdb := database.ConnectRedis()
+
+	repoOrders := orderRepository.NewRepository(client, rdb)
+	useCaseOrders := orderUseCase.NewUseCase(repoOrders, rdb)
 	orderHandler := orderHandler.NewHandler(useCaseOrders)
 
 	r := routes.SetUpRoutes(client, orderHandler)

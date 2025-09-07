@@ -10,7 +10,7 @@ import (
 )
 
 func ConnectMongoDB() (*mongo.Client, error) {
-	clientOptions := options.Client().ApplyURI("mongodb://pyegros:pass@mongodb:27017/orders?authSource=admin")
+	clientOptions := options.Client().ApplyURI("mongodb://pyegros:pass@localhost:27017")
 	//clientOptions := options.Client().ApplyURI("mongodb://mongodb:27017/orders?authSource=admin")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

@@ -4,9 +4,12 @@ import (
 	"challenge_pyegros/app/models"
 	"testing"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/integration/mtest"
+
+	"github.com/alicebob/miniredis/v2"
 )
 
 var (
@@ -54,11 +57,25 @@ var (
 	}
 )
 
+func CreateCacheForTesting(t *testing.T) *redis.Client {
+	s := miniredis.RunT(t)
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     s.Addr(),
+		Password: "",
+		DB:       0,
+	})
+
+	return rdb
+}
 func TestCreateOrderSuccess(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 
 	mt.Run("success", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+
+		ordersRepo := NewRepository(mt.Client, rdb)
 
 		mt.AddMockResponses(mtest.CreateSuccessResponse())
 
@@ -81,10 +98,12 @@ func TestCreateOrderSuccess(t *testing.T) {
 }
 
 func TestCreateOrderTotalMismatch(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 
 	mt.Run("total mismatch", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		localOrder := order
 		localOrder.TotalValue = 3000
 		model, err := ordersRepo.CreateOrder(localOrder)
@@ -94,9 +113,11 @@ func TestCreateOrderTotalMismatch(t *testing.T) {
 }
 
 func TestCreateOrderInvalidExternalReferenceID(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("invalid external reference id", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		localOrder := order
 		localOrder.ExternalReferenceID = "invalid_id"
 		model, err := ordersRepo.CreateOrder(localOrder)
@@ -106,9 +127,11 @@ func TestCreateOrderInvalidExternalReferenceID(t *testing.T) {
 }
 
 func TestCreateOrderObtainIDError(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("obtain id error", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		ordersRepo.obtainID = func() (int64, error) {
 			return 0, ErrCreatingAutoIncrementalId
 		}
@@ -119,9 +142,11 @@ func TestCreateOrderObtainIDError(t *testing.T) {
 }
 
 func TestCreateOrderFailsInsertOne(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("fails insert one", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		ordersRepo.obtainID = func() (int64, error) {
 			return counter.SequenceValue, nil
 		}
@@ -137,9 +162,11 @@ func TestCreateOrderFailsInsertOne(t *testing.T) {
 }
 
 func TestGetOrderByIDSuccess(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("success", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		firstResponse := mtest.CreateCursorResponse(1, "orders.orders", mtest.FirstBatch, bson.D{
 			{Key: "id", Value: 1},
 			{Key: "externalReferenceID", Value: order.ExternalReferenceID},
@@ -175,9 +202,11 @@ func TestGetOrderByIDSuccess(t *testing.T) {
 }
 
 func TestGetOrderByIDFailsFindOne(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("fails find one", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		mt.AddMockResponses(mtest.CreateCommandErrorResponse(mtest.CommandError{
 			Code:    66,
 			Message: "some error",
@@ -192,9 +221,11 @@ func TestGetOrderByIDFailsFindOne(t *testing.T) {
 }
 
 func TestGetOrderByFiltersSuccess(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("success", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		firstResponse := mtest.CreateCursorResponse(1, "orders.orders", mtest.FirstBatch, bson.D{
 			{Key: "id", Value: 1},
 			{Key: "externalReferenceID", Value: order.ExternalReferenceID},
@@ -226,9 +257,11 @@ func TestGetOrderByFiltersSuccess(t *testing.T) {
 }
 
 func TestGetOrderByFilterErrorFindOne(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("error find one", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		mt.AddMockResponses(mtest.CreateCommandErrorResponse(mtest.CommandError{
 			Code:    66,
 			Message: "some error",
@@ -242,9 +275,11 @@ func TestGetOrderByFilterErrorFindOne(t *testing.T) {
 }
 
 func TestGetOrderByFilterErrorCursorAll(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("error cursor all", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		firstResponse := mtest.CreateCursorResponse(1, "orders.orders", mtest.FirstBatch, bson.D{
 			{Key: "id", Value: 1},
 			{Key: "externalReferenceID", Value: order.ExternalReferenceID},
@@ -269,6 +304,7 @@ func TestGetOrderByFilterErrorCursorAll(t *testing.T) {
 }
 
 func TestValidateStateTransition(t *testing.T) {
+
 	status, err := validateStateTransition("Created", "PaymentReceived")
 	assert.NoError(t, err)
 	assert.Equal(t, "PaymentReceived", status)
@@ -333,9 +369,11 @@ func TestTranslate(t *testing.T) {
 }
 
 func TestUpdateEventOrderSuccess(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("success", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		firstResponse := mtest.CreateCursorResponse(1, "orders.orders", mtest.FirstBatch, bson.D{
 			{Key: "id", Value: 1},
 			{Key: "externalReferenceID", Value: order.ExternalReferenceID},
@@ -363,9 +401,11 @@ func TestUpdateEventOrderSuccess(t *testing.T) {
 }
 
 func TestUpdateEventOrderFailFindOne(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("fails find one", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 		mt.AddMockResponses(mtest.CreateCommandErrorResponse(mtest.CommandError{
 			Code:    66,
 			Message: "some error",
@@ -380,9 +420,11 @@ func TestUpdateEventOrderFailFindOne(t *testing.T) {
 }
 
 func TestUpdateEventOrderFailsUniqueEventID(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("fails unique event id", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 
 		firstResponse := mtest.CreateCursorResponse(1, "orders.orders", mtest.FirstBatch, bson.D{
 			{Key: "id", Value: 1},
@@ -408,9 +450,11 @@ func TestUpdateEventOrderFailsUniqueEventID(t *testing.T) {
 }
 
 func TestUpdateEventOrderFailsRepeatEvent(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("fails unique event id", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 
 		firstResponse := mtest.CreateCursorResponse(1, "orders.orders", mtest.FirstBatch, bson.D{
 			{Key: "id", Value: 1},
@@ -433,9 +477,11 @@ func TestUpdateEventOrderFailsRepeatEvent(t *testing.T) {
 }
 
 func TestUpdateEventOrderFailsEventTransition(t *testing.T) {
+	rdb := CreateCacheForTesting(t)
+
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 	mt.Run("fails unique event id", func(mt *mtest.T) {
-		ordersRepo := NewRepository(mt.Client)
+		ordersRepo := NewRepository(mt.Client, rdb)
 
 		firstResponse := mtest.CreateCursorResponse(1, "orders.orders", mtest.FirstBatch, bson.D{
 			{Key: "id", Value: 1},

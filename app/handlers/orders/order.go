@@ -5,7 +5,6 @@ import (
 	"challenge_pyegros/app/utils"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -35,7 +34,6 @@ func NewOrderHandler(client *mongo.Client) *OrderHandler {
 // @Failure 500 {object} nil
 // @Router /orders [post]
 func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
-	log.Println("Received request to create order")
 	w.Header().Set("Content-Type", "application/json")
 
 	body, err := io.ReadAll(r.Body)

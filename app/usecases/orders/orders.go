@@ -3,14 +3,20 @@ package orders
 import (
 	"challenge_pyegros/app/models"
 	ports "challenge_pyegros/app/ports/orders"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type UseCase struct {
-	r ports.OrdersUseCase
+	r     ports.OrdersUseCase
+	redis *redis.Client
 }
 
-func NewUseCase(r ports.OrdersUseCase) *UseCase {
-	return &UseCase{r: r}
+func NewUseCase(r ports.OrdersUseCase, redis *redis.Client) *UseCase {
+	return &UseCase{
+		r:     r,
+		redis: redis,
+	}
 }
 
 func (u *UseCase) CreateOrder(order models.Order) (*models.ResponseCreate, error) {
