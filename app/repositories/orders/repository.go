@@ -85,6 +85,8 @@ func (r *Repository) CreateOrder(order models.Order) (*models.ResponseCreate, er
 	err = database.SetOrderDataFromRedis(keyForRedisCache, response, r.redis)
 	if err != nil {
 		fmt.Println("Error seting value of: " + keyForRedisCache)
+	} else {
+		fmt.Println("Set value of key: " + keyForRedisCache)
 	}
 	return response, nil
 }
@@ -141,6 +143,8 @@ func (r *Repository) UpdateEventOrder(orderID int64, event models.Event) (*model
 	err = database.SetEventDataFromRedis(event.Id, response, r.redis)
 	if err != nil {
 		fmt.Println("Error seting value of: " + event.Id)
+	} else {
+		fmt.Println("Set value of key: " + event.Id)
 	}
 
 	return response, nil
