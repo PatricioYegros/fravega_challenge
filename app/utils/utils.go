@@ -38,9 +38,11 @@ func getQueryValue(r *http.Request, key string) (string, error) {
 
 func CheckFormatDate(date string) error {
 	var err = errors.New("The date is not in the correct format")
-	_, errParse := time.Parse(time.RFC3339, date)
-	if errParse != nil {
-		return err
+	if date != "" {
+		_, errParse := time.Parse(time.RFC3339, date)
+		if errParse != nil {
+			return err
+		}
 	}
 	return nil
 }

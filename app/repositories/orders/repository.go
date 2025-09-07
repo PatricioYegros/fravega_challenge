@@ -112,10 +112,15 @@ func (r *Repository) UpdateEventOrder(orderID int64, event models.Event) (*model
 		return nil, err
 	}
 
+	newStatus, err := validateStateTransition(order.Status, event.Type)
+	if err != nil {
+		return nil, err
+	}
+
 	response := &models.ResponseUpdate{
 		OrderID:        order.OrderID,
 		PreviousStatus: order.Status,
-		NewStatus:      "newStatus",
+		NewStatus:      newStatus,
 		UpdatedOn:      event.Date,
 	}
 
@@ -126,11 +131,6 @@ func (r *Repository) UpdateEventOrder(orderID int64, event models.Event) (*model
 		if !unique {
 			return response, nil
 		}
-	}
-
-	newStatus, err := validateStateTransition(order.Status, event.Type)
-	if err != nil {
-		return nil, err
 	}
 
 	update := bson.M{"$set": bson.M{"status": newStatus}, "$push": bson.M{"events": event}}

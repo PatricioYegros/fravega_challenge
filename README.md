@@ -28,4 +28,13 @@ API REST called Ordes responsible for managing customer purchase orders
         If the translations grow in quantity or languages, i would implement i18n or if i have a project in GCP, the service
         of Google Translate.
 
-    4) The correct date format is checked (is RFC3339)
+    4) The correct date format is checked (is RFC3339).
+
+    5) The idempotency is handled through Redis Caché, with a TTL of 1 day.
+
+    6) The externalReferenceId of each Channel are made up by me and they are these:
+
+            "Ecommerce":  "abc-123",
+            "CallCenter": "def-456",
+            "Store":      "ghi-789",
+            "Affiliate":  "jkl-012",

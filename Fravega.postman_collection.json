@@ -16,7 +16,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"externalReferenceId\": \"abc-123\",\r\n    \"channel\": \"Ecommerce\",\r\n    \"purchaseDate\": \"2024-05-01T14:00:00Z\",\r\n    \"totalValue\": 2000,\r\n    \"buyer\": {\r\n        \"firstName\": \"Julieta\",\r\n        \"lastName\": \"Patta\",\r\n        \"documentNumber\": \"87654321\",\r\n        \"phone\": \"+541112345678\"\r\n    },\r\n    \"products\": [\r\n        {\r\n            \"sku\": \"P001\",\r\n            \"name\": \"Producto A\",\r\n            \"description\": \"Descripción\",\r\n            \"price\": 1000,\r\n            \"quantity\": 2\r\n        }\r\n    ]\r\n}",
+					"raw": "{\r\n    \"externalReferenceId\": \"abc-123\",\r\n    \"channel\": \"Ecommerce\",\r\n    \"purchaseDate\": \"2024-05-01T14:00:00Z\",\r\n    \"totalValue\": 2000,\r\n    \"buyer\": {\r\n        \"firstName\": \"Patricio\",\r\n        \"lastName\": \"Yegros\",\r\n        \"documentNumber\": \"87654321\",\r\n        \"phone\": \"+541112345678\"\r\n    },\r\n    \"products\": [\r\n        {\r\n            \"sku\": \"P001\",\r\n            \"name\": \"Producto A\",\r\n            \"description\": \"Descripción\",\r\n            \"price\": 1000,\r\n            \"quantity\": 2\r\n        }\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
