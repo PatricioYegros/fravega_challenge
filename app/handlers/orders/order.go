@@ -45,18 +45,18 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var order models.Order
 	err = json.Unmarshal(body, &order)
 	if err != nil {
-		http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
+		http.Error(w, `{"error": "Error unmarshaling JSON"}`, http.StatusBadRequest)
 		return
 	}
 	err = utils.CheckFormatDate(order.PurchaseDate)
 	if err != nil {
-		http.Error(w, error.Error(err), http.StatusInternalServerError)
+		http.Error(w, `{"error": "`+error.Error(err)+`"}`, http.StatusInternalServerError)
 		return
 	}
 	var response *models.ResponseCreate
 	response, err = h.u.CreateOrder(order)
 	if err != nil {
-		http.Error(w, error.Error(err), http.StatusInternalServerError)
+		http.Error(w, `{"error": "`+error.Error(err)+`"}`, http.StatusInternalServerError)
 		return
 	}
 
@@ -96,20 +96,23 @@ func (h *Handler) UpdateEventOrder(w http.ResponseWriter, r *http.Request) {
 	orderIDInt, err := strconv.Atoi(orderID)
 	err = json.Unmarshal(body, &event)
 	if err != nil {
-		http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
+		http.Error(w, `{"error": "Error unmarshaling JSON"}`, http.StatusBadRequest)
 		return
 	}
 
 	err = utils.CheckFormatDate(event.Date)
 	if err != nil {
-		http.Error(w, error.Error(err), http.StatusInternalServerError)
+		http.Error(w, `{"error": "`+error.Error(err)+`"}`, http.StatusBadRequest)
 		return
 	}
 
 	var response *models.ResponseUpdate
 	response, err = h.u.UpdateEventOrder(int64(orderIDInt), event)
-	if err != nil {
-		http.Error(w, error.Error(err), http.StatusInternalServerError)
+	if err == mongo.ErrNoDocuments {
+		http.Error(w, `{"error": "The search did not return any results. Incorrect ID."}`, http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, `{"error": "`+error.Error(err)+`"}`, http.StatusInternalServerError)
 		return
 	}
 
@@ -138,10 +141,17 @@ func (h *Handler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	orderID := chi.URLParam(r, "orderId")
 	orderIDInt, err := strconv.Atoi(orderID)
+	if err != nil {
+		http.Error(w, `{"error": "ID must be a number"}`, http.StatusInternalServerError)
+		return
+	}
 
 	response, err := h.u.GetOrderByID(int64(orderIDInt))
-	if err != nil {
-		http.Error(w, error.Error(err), http.StatusInternalServerError)
+	if err == mongo.ErrNoDocuments {
+		http.Error(w, `{"error": "The search did not return any results. Incorrect ID."}`, http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, `{"error": "`+error.Error(err)+`"}`, http.StatusInternalServerError)
 		return
 	}
 
@@ -177,18 +187,18 @@ func (h *Handler) GetOrderByFilters(w http.ResponseWriter, r *http.Request) {
 
 	err := utils.CheckFormatDate(filters.CreatedOnFrom)
 	if err != nil {
-		http.Error(w, "The From date is not in the correct format", http.StatusInternalServerError)
+		http.Error(w, `{"error": "The From date is not in the correct format"}`, http.StatusInternalServerError)
 		return
 	}
 	err = utils.CheckFormatDate(filters.CreatedOnTo)
 	if err != nil {
-		http.Error(w, "The To date is not in the correct format", http.StatusInternalServerError)
+		http.Error(w, `{"error": "The To date is not in the correct format"}`, http.StatusInternalServerError)
 		return
 	}
 
 	response, err := h.u.GetOrderByFilters(filters)
 	if err != nil {
-		http.Error(w, error.Error(err), http.StatusInternalServerError)
+		http.Error(w, `{"error": "`+error.Error(err)+`"}`, http.StatusInternalServerError)
 		return
 	}
 

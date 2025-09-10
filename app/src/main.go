@@ -24,7 +24,7 @@ import (
 func main() {
 	client, err := database.ConnectMongoDB()
 	if err != nil {
-		log.Fatal("Failed to connect to MongoDB:", err)
+		panic("Failed to connect to MongoDB:")
 	}
 	defer func() {
 		if err = client.Disconnect(context.TODO()); err != nil {
